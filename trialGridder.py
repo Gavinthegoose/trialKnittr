@@ -635,7 +635,7 @@ def createOnOffGrid(verticleLines, site, verbosity=False, debug=False):
 print("Starting Trial Creation ...")
 
 #Import Data
-debug = True
+debug = False
 
 # Debugging parameters
 if debug == True:
