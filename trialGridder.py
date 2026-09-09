@@ -211,9 +211,11 @@ def create_grid(horizontal_lines, verticleLines, site, verbosity = False):
 		site_geom_coords = site_geom.bounds
 		print(f"Corner coordinate values of site bounding box: {site_geom_coords[0], site_geom_coords[1]}") # Should line up, may not be 100% accurate
 
+
+
 	return poly_gdf
 
-def input_product_values(poly_gdf, fieldBoundary, siteName, out_dir, vrRates, fieldRate, trialType):
+def input_product_values(poly_gdf, fieldBoundary, siteName, out_dir, vrRates, fieldRate, trialType, savePolyGDF):
 
 	'''
 	poly_gdf: GeoPandas GeoDataframe object taken from create_grids function
@@ -252,6 +254,21 @@ def input_product_values(poly_gdf, fieldBoundary, siteName, out_dir, vrRates, fi
 	 
 	out_df['rate'] = out_df['rate'].astype(np.float32)
 	out_df['rate_lbs'] = out_df['rate'] * 0.8922 # Converts to lbs/ac
+
+	# Save this field grid before dissolving, if User specifies
+		# Save poly_gdf if the user would like
+	if savePolyGDF == True:
+		polyOutFolder = out_dir / "trialGrid"
+		polyOutFolder.mkdir(exist_ok=True, parents=True)
+
+		
+
+		polyOutPath = polyOutFolder / "trialGrid.shp"
+		if verbosity == True:
+			print(f"Folder: {polyOutFolder}")
+			print(f"File: {polyOutPath}")
+
+		out_df.to_file(polyOutPath)
 	
 	# Dissolve geometries on rate
 	dissolved = out_df.dissolve('rate').reset_index()
@@ -618,15 +635,15 @@ def createOnOffGrid(verticleLines, site, verbosity=False, debug=False):
 print("Starting Trial Creation ...")
 
 #Import Data
-debug = False
+debug = True
 
 # Debugging parameters
 if debug == True:
-	project_root = "/home/walker/wrm100/projects/MORSE VR/2026"
-	selectedSite = "/mnt/thirdeye/Datasync/wrm100/projects/MORSE VR/2026/raw_data/bounding boxes/2026HunterVRRamp.shp"
-	selectedField = "/mnt/thirdeye/Datasync/wrm100/projects/MORSE VR/2026/boundaries/hunterFieldBound.shp"
-	rampRatesPath = "/mnt/thirdeye/Datasync/wrm100/projects/MORSE VR/2026/raw_data/hunterRates.csv"
-	onOffRatesPath = "/home/walker/wrm100/projects/MORSE VR/2026/workingFiles/vector/onOffTest/onOffRatesV2.csv"
+	project_root = "C:/Users/wrm100/gavinthegoose/trialKnittr"
+	selectedSite = f"{project_root}/rawData/rampTestData/hunterWheatRamp.kml"
+	selectedField = f"{project_root}/rawData/rampTestData/hunterFieldBoundary/hunterFieldBound.shp"
+	rampRatesPath = f"{project_root}/rawData/rampTestData/hunterRampRates.csv"
+	onOffRatesPath =f"{project_root}/rawData/onOffTestData/onOffRatesV2.csv"
 	crsInput = 1
 
 else:
@@ -712,6 +729,20 @@ What type of trial is going in?
 '''
 )
 
+# Poly GDF Save Toggle
+savePolyGDF = input(
+'''
+Would you like to save the grid of the trial?
+[0] No
+[1] Yes
+'''
+)
+
+savePolyGDF = bool(savePolyGDF)
+
+if verbosity == True:
+	print(savePolyGDF)
+
 # Convert into repsective names for following if statements
 if int(trial_type) == 1:
 	trialType = 'Ramp'
@@ -745,8 +776,22 @@ if trialType == 'Ramp':
 	# Merge all plots together
 	poly_gdf = create_grid(horizontal_lines, verticleLines, site, verbosity=verbosity)
 
+	# # Save poly_gdf if the user would like
+	# if savePolyGDF == True:
+	# 	polyOutFolder = out_dir / "trialGrid"
+	# 	polyOutFolder.mkdir(exist_ok=True, parents=True)
+
+		
+
+	# 	polyOutPath = polyOutFolder / "trialGrid.shp"
+	# 	if verbosity == True:
+	# 		print(f"Folder: {polyOutFolder}")
+	# 		print(f"File: {polyOutPath}")
+
+	# 	poly_gdf.to_file(polyOutPath)
+
 	# Save output as needed
-	input_product_values(poly_gdf, fieldBoundary, site_name, out_dir, vrRates, fieldRate, trialType)
+	input_product_values(poly_gdf, fieldBoundary, site_name, out_dir, vrRates, fieldRate, trialType, savePolyGDF)
 
 # On-Off format
 if trialType == 'On/Off':
